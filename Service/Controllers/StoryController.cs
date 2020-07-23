@@ -1,5 +1,8 @@
 ﻿using hacker_news_feed.Service.Config;
 using hacker_news_feed.Service.Interfaces.Story;
+using hacker_news_feed.Service.Models.Api;
+using hacker_news_feed.Service.Models.Item;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -25,7 +28,7 @@ namespace hacker_news_feed.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> NewStories([FromQuery] ApiQueryModel query)
         {
             IEnumerable<int> newStories;
 
@@ -48,6 +51,35 @@ namespace hacker_news_feed.Controllers
             }
 
             return Ok(newStories);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Story(int id)
+        {
+            SortedList<int, Item> stories;
+            if (!_cache.TryGetValue(CacheKeys.Items, out stories) || !stories.ContainsKey(id))
+            {
+                try
+                {
+                    var story = await _storyService.GetStory(id);
+
+                    if(stories == null)
+                    {
+                        stories = new SortedList<int, Item>();
+                    }
+                    stories.Add(id, story);
+                    var cacheEntryOptions = new MemoryCacheEntryOptions().SetSlidingExpiration(TimeSpan.FromMinutes(1)); // Temp val, define in config later
+                    _cache.Set(CacheKeys.Items, stories, cacheEntryOptions);
+
+                    return Ok(story);
+                }
+                catch (Exception)
+                {
+                    return BadRequest($"Error pulling story {id}");
+                }
+            }
+
+            return Ok(stories.GetValueOrDefault(id));
         }
     }
 }

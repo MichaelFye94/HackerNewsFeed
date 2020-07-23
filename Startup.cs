@@ -1,3 +1,4 @@
+using hacker_news_feed.Service.Data;
 using hacker_news_feed.Service.Interfaces.Story;
 using hacker_news_feed.Service.Services;
 using Microsoft.AspNetCore.Builder;
@@ -24,6 +25,11 @@ namespace hacker_news_feed
             services.AddControllersWithViews();
 
             services.AddHttpClient<IStoryService, StoryService>(client =>
+            {
+                client.BaseAddress = new System.Uri(Configuration["HackerNewsUrl"]);
+            });
+
+            services.AddHttpClient<IStoryData, StoryData>(client =>
             {
                 client.BaseAddress = new System.Uri(Configuration["HackerNewsUrl"]);
             });
