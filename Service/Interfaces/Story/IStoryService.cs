@@ -7,6 +7,7 @@ namespace hacker_news_feed.Service.Interfaces.Story
     public interface IStoryService
     {
         Task<IEnumerable<int>> GetNewStories();
-        Task<Item> GetStory(int id);
+        Task<Item> GetItem(int id);
+        Task<IDictionary<int, Item>> GetItems(IEnumerable<int> ids);
     }
 }

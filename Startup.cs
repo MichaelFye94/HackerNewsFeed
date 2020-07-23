@@ -3,7 +3,6 @@ using hacker_news_feed.Service.Interfaces.Story;
 using hacker_news_feed.Service.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,15 +23,12 @@ namespace hacker_news_feed
         {
             services.AddControllersWithViews();
 
-            services.AddHttpClient<IStoryService, StoryService>(client =>
-            {
-                client.BaseAddress = new System.Uri(Configuration["HackerNewsUrl"]);
-            });
-
             services.AddHttpClient<IStoryData, StoryData>(client =>
             {
                 client.BaseAddress = new System.Uri(Configuration["HackerNewsUrl"]);
             });
+
+            services.AddTransient<IStoryService, StoryService>();
 
             // In production, the Angular files will be served from this directory
             services.AddSpaStaticFiles(configuration =>

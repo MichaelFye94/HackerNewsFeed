@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 
 namespace hacker_news_feed.Service.Abstract.Data
 {
-    public abstract class BaseApiRequest
+    public abstract class ApiRequestBase
     {
         private HttpClient _httpClient;
-        public BaseApiRequest(HttpClient httpClient)
+        public ApiRequestBase(HttpClient httpClient)
         {
             _httpClient = httpClient;
         }
@@ -16,9 +16,9 @@ namespace hacker_news_feed.Service.Abstract.Data
         {
             try
             {
-                var response = await _httpClient.GetAsync(BuildJsonUrl(url));
+                var response = await _httpClient.GetAsync(BuildJsonUrl(url)).ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
-                var responseBody = await response.Content.ReadAsStringAsync();
+                var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
                 // Parse response from responseBody
                 var result = JsonConvert.DeserializeObject<T>(responseBody);
