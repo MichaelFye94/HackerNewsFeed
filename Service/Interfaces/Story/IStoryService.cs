@@ -8,6 +8,6 @@ namespace hacker_news_feed.Service.Interfaces.Story
     {
         Task<IEnumerable<int>> GetNewStories();
         Task<Item> GetItem(int id);
-        Task<IDictionary<int, Item>> GetItems(IEnumerable<int> ids);
+        Task<IEnumerable<Item>> GetItems(IEnumerable<int> ids);
     }
 }

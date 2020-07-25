@@ -29,9 +29,9 @@ namespace hacker_news_feed
                 client.BaseAddress = new System.Uri(Configuration["HackerNewsUrl"]);
             });
 
-            services.AddTransient<IStoryService, StoryService>();
-            services.AddTransient<IStoryCacheService, StoryCacheService>();
-            services.AddTransient<IStoryProvider, StoryProvider>();
+            services.AddScoped<IStoryService, StoryService>();
+            services.AddSingleton<IStoryCacheService, StoryCacheService>();
+            services.AddScoped<IStoryProvider, StoryProvider>();
 
             // In production, the Angular files will be served from this directory
             services.AddSpaStaticFiles(configuration =>

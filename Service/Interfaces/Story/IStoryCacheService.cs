@@ -1,15 +1,16 @@
-﻿using Microsoft.Extensions.Caching.Memory;
-using System;
+﻿using hacker_news_feed.Service.Models.Item;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace hacker_news_feed.Service.Interfaces.Story
 {
     public interface IStoryCacheService
     {
-        bool TryGetValue<T>(object key, out T value);
-        T Set<T>(object key, T value);
-        T SetExtendedExpiration<T>(object key, T value);
+        bool GetStoryCached(int id, out Item story);
+        IEnumerable<int> GetStoriesNotContained(IEnumerable<int> ids);
+        bool TryGetNewStoryIdsCache(out IEnumerable<int> newStoryIds);
+        Item TryAddStoryToCache(Item story);
+        bool TryGetStoriesCache(out SortedList<int, Item> stories);
+        IEnumerable<int> TryAddNewStoryIdsToCache(IEnumerable<int> ids);
+        SortedList<int, Item> TryAddStoriesToCache(IEnumerable<Item> stories);
     }
 }

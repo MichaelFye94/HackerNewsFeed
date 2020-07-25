@@ -11,10 +11,7 @@
   <tbody>
     <tr *ngFor="let story of newStories">
       <td>
-          <a href={{story.url}} *ngIf="story.url else noLink">{{ story.title }}</a>
-          <ng-template #noLink>
-              <p>{{ story.title }}</p>
-          </ng-template>
+          <p>{{ story.title }} <a href={{story.url}} *ngIf="!!story.url"><i class="fas fa-link"></i></a></p>
         </td>
     </tr>
   </tbody>

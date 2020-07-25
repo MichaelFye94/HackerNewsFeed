@@ -25,12 +25,12 @@ namespace hacker_news_feed.Service.Services
             return await _storyData.GetStory(id).ConfigureAwait(false);
         }
 
-        public async Task<IDictionary<int, Item>> GetItems(IEnumerable<int> ids)
+        public async Task<IEnumerable<Item>> GetItems(IEnumerable<int> ids)
         {
-            var stories = new ConcurrentDictionary<int, Item>();
+            var stories = new ConcurrentBag<Item>();
             foreach (var id in ids)
             {
-                stories.TryAdd(id, await GetItem(id).ConfigureAwait(false));
+                stories.Add(await GetItem(id).ConfigureAwait(false));
             }
             return stories;
         }

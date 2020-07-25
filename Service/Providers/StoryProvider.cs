@@ -1,7 +1,5 @@
-﻿using hacker_news_feed.Service.Config;
-using hacker_news_feed.Service.Interfaces.Story;
+﻿using hacker_news_feed.Service.Interfaces.Story;
 using hacker_news_feed.Service.Models.Item;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -21,57 +19,41 @@ namespace hacker_news_feed.Service.Providers
 
         public async Task<Item> GetItem(int id)
         {
-            SortedList<int, Item> stories;
             Item story;
-            var foundCachedValue = false;
 
-            var cached = _cache.TryGetValue(CacheKeys.Items, out stories);
-            if (!cached)
-            {
-                stories = new SortedList<int, Item>();
-            }
-            else if (stories.ContainsKey(id))
-            {
-                foundCachedValue = true;
-                story = stories.GetValueOrDefault(id);
-                if (story != null)
-                    return story;
-            }
+            var cached = _cache.GetStoryCached(id, out story);
+            if (cached)
+                return story;
+
             try
             {
                 story = await _storyService.GetItem(id).ConfigureAwait(false);
                 if (story == null)
                     return null;
+
+                _cache.TryAddStoryToCache(story);
+                return story;
             }
             catch
             {
                 return null;
             }
-
-            if (foundCachedValue)
-                stories[id] = story;
-            else
-                stories.Add(id, story);
-            _cache.Set(CacheKeys.Items, stories);
-
-            return story;
         }
 
         public async Task<IEnumerable<int>> GetNewStoryIds()
         {
             IEnumerable<int> newStories;
 
-            var cached = _cache.TryGetValue(CacheKeys.NewStories, out newStories);
+            var cached = _cache.TryGetNewStoryIdsCache(out newStories);
             if (cached)
                 return newStories;
 
             try
             {
                 newStories = await _storyService.GetNewStories().ConfigureAwait(false);
-                _cache.Set(CacheKeys.NewStories, newStories);
-                return newStories;
+                return _cache.TryAddNewStoryIdsToCache(newStories);
             }
-            catch (Exception)
+            catch
             {
                 return null;
             }
@@ -79,39 +61,26 @@ namespace hacker_news_feed.Service.Providers
 
         public async Task<SortedList<int, Item>> GetNewStories(IEnumerable<int> storyIds)
         {
-            SortedList<int, Item> stories;
-            _ = _cache.TryGetValue(CacheKeys.Items, out stories);
-
-            if (stories == null)
+            var idsNotCached = _cache.GetStoriesNotContained(storyIds);
+            IEnumerable<Item> items;
+            if(idsNotCached.Any())
             {
-                try
-                {
-                    var items = await _storyService.GetItems(storyIds).ConfigureAwait(false);
-                    if (items == null) return null;
+                items = await _storyService.GetItems(idsNotCached).ConfigureAwait(false);
 
-                    stories = new SortedList<int, Item>(items);
-                }
-                catch
-                {
-                    return null;
-                }
+                var stories = _cache.TryAddStoriesToCache(items);
+                return stories;
             }
             else
             {
-                var idsNotCached = storyIds.Where(id => !stories.ContainsKey(id) || stories.GetValueOrDefault(id) == null);
-                var items = await _storyService.GetItems(idsNotCached).ConfigureAwait(false);
-                foreach (var item in items)
+                SortedList<int, Item> stories;
+                _ = _cache.TryGetStoriesCache(out stories);
+                if(stories == null)
                 {
-                    var success = stories.TryAdd(item.Key, item.Value);
-                    if (!success  && stories.GetValueOrDefault(item.Key) == null)
-                    {
-                        stories[item.Key] = item.Value;
-                    }
+                    items = await _storyService.GetItems(storyIds).ConfigureAwait(false);
+                    stories = _cache.TryAddStoriesToCache(items);
                 }
+                return stories;
             }
-
-            _cache.SetExtendedExpiration(CacheKeys.Items, stories);
-            return stories;
         }
     }
 }
