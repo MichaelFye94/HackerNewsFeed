@@ -51,7 +51,6 @@ namespace hacker_news_feed
             }
 
             app.UseHttpsRedirection();
-            app.UseStaticFiles();
             if (!env.IsDevelopment())
             {
                 app.UseSpaStaticFiles();

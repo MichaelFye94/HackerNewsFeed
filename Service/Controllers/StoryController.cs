@@ -48,7 +48,7 @@ namespace hacker_news_feed.Controllers
                 }
             }
 
-            var pageList = newStoriesIds.Skip(query.Page - 1).Take(query.PageSize);
+            var pageList = newStoriesIds.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize);
             SortedList<int, Item> stories;
             _ = _cache.TryGetValue(CacheKeys.Items, out stories);
             
@@ -58,11 +58,15 @@ namespace hacker_news_feed.Controllers
                 stories = new SortedList<int, Item>(items);
             } else
             {
-                var idsNotCached = pageList.Where(id => !stories.ContainsKey(id));
+                var idsNotCached = pageList.Where(id => !stories.ContainsKey(id) || stories.GetValueOrDefault(id) != null);
                 var items = await _storyService.GetItems(idsNotCached).ConfigureAwait(false);
                 foreach(var item in items)
                 {
-                    stories.TryAdd(item.Key, item.Value);
+                    var success = stories.TryAdd(item.Key, item.Value);
+                    if(!success && stories.ContainsKey(item.Key) && stories.GetValueOrDefault(item.Key) == null)
+                    {
+                        stories[item.Key] = item.Value;
+                    }
                 }
             }
 
@@ -71,7 +75,11 @@ namespace hacker_news_feed.Controllers
                 return BadRequest("Error pulling new stories");
             }
 
-            var result = pageList.Select(id => stories.GetValueOrDefault(id));
+            var result = new ApiPagedList<Item>(
+                pageList.Select(id => stories.GetValueOrDefault(id)),
+                query.Page,
+                (int)Math.Ceiling((double)newStoriesIds.Count() / query.PageSize)
+            );
 
             var cacheEntryOptions = new MemoryCacheEntryOptions().SetSlidingExpiration(TimeSpan.FromMinutes(1)); // Temp val, define in config later
             _cache.Set(CacheKeys.NewStories, newStoriesIds, cacheEntryOptions);

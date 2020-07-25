@@ -1,0 +1,25 @@
+<h1 id="tableLabel">New Stories</h1>
+
+<p *ngIf="!newStories"><em>Loading...</em></p>
+
+<table class='table table-striped' aria-labelledby="tableLabel" *ngIf="newStories">
+  <thead>
+    <tr>
+      <th>Title</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let story of newStories">
+      <td>
+          <a href={{story.url}} *ngIf="story.url else noLink">{{ story.title }}</a>
+          <ng-template #noLink>
+              <p>{{ story.title }}</p>
+          </ng-template>
+        </td>
+    </tr>
+  </tbody>
+  <button (click)="onChangePage($event)" value="1" [disabled]="this.page == 1"> << </button>
+  <button (click)="onPageDecrement()" [disabled]="this.page == 1"> < </button>
+  <button (click)="onPageIncrement()" [disabled]="this.page == this.last"> > </button>
+  <button (click)="onChangePage($event)" value={{last}} [disabled]="this.page == this.last"> >> </button>
+</table>
