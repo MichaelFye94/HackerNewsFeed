@@ -1,10 +1,7 @@
-﻿using hacker_news_feed.Service.Config;
-using hacker_news_feed.Service.Interfaces.Story;
+﻿using hacker_news_feed.Service.Interfaces.Story;
 using hacker_news_feed.Service.Models.Api;
 using hacker_news_feed.Service.Models.Item;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,15 +13,11 @@ namespace hacker_news_feed.Controllers
     [Route("[controller]")]
     public class StoryController : ControllerBase
     {
-        private readonly IStoryService _storyService;
-        private readonly ILogger<StoryController> _logger;
-        private IMemoryCache _cache;
+        private readonly IStoryProvider _storyProvider;
 
-        public StoryController(IStoryService storyService, ILogger<StoryController> logger, IMemoryCache cache)
+        public StoryController(IStoryProvider storyProvider)
         {
-            _storyService = storyService;
-            _logger = logger;
-            _cache = cache;
+            _storyProvider = storyProvider;
         }
 
         /// <summary>
@@ -35,84 +28,44 @@ namespace hacker_news_feed.Controllers
         [HttpGet]
         public async Task<IActionResult> NewStories([FromQuery] ApiQueryModel query)
         {
-            IEnumerable<int> newStoriesIds;
-            if (!_cache.TryGetValue(CacheKeys.NewStories, out newStoriesIds))
+            var newStoryIds = await _storyProvider.GetNewStoryIds();
+            if(newStoryIds == null)
             {
-                try
-                {
-                    newStoriesIds = await _storyService.GetNewStories().ConfigureAwait(false);
-                }
-                catch
-                {
-                    return BadRequest("Error pulling new stories list");
-                }
+                return BadRequest("Error loading new story list");
             }
 
-            var pageList = newStoriesIds.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize);
-            SortedList<int, Item> stories;
-            _ = _cache.TryGetValue(CacheKeys.Items, out stories);
-            
-            if(stories == null)
-            {
-                var items = await _storyService.GetItems(pageList).ConfigureAwait(false);
-                stories = new SortedList<int, Item>(items);
-            } else
-            {
-                var idsNotCached = pageList.Where(id => !stories.ContainsKey(id) || stories.GetValueOrDefault(id) != null);
-                var items = await _storyService.GetItems(idsNotCached).ConfigureAwait(false);
-                foreach(var item in items)
-                {
-                    var success = stories.TryAdd(item.Key, item.Value);
-                    if(!success && stories.ContainsKey(item.Key) && stories.GetValueOrDefault(item.Key) == null)
-                    {
-                        stories[item.Key] = item.Value;
-                    }
-                }
-            }
-
+            var pageList = newStoryIds.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize);
+            var stories = await _storyProvider.GetNewStories(pageList);
             if(stories == null)
             {
                 return BadRequest("Error pulling new stories");
             }
 
+            var paginatedResult = pageList.Select(id => stories.GetValueOrDefault(id));
+            var currentPage = query.Page;
+            var lastPage = (int)Math.Ceiling((double)newStoryIds.Count() / query.PageSize);
+
             var result = new ApiPagedList<Item>(
-                pageList.Select(id => stories.GetValueOrDefault(id)),
-                query.Page,
-                (int)Math.Ceiling((double)newStoriesIds.Count() / query.PageSize)
+                paginatedResult,
+                currentPage,
+                lastPage
             );
 
-            var cacheEntryOptions = new MemoryCacheEntryOptions().SetSlidingExpiration(TimeSpan.FromMinutes(1)); // Temp val, define in config later
-            _cache.Set(CacheKeys.NewStories, newStoriesIds, cacheEntryOptions);
-            _cache.Set(CacheKeys.Items, stories, cacheEntryOptions);
             return Ok(result);
         }
 
+        /// <summary>
+        /// Returns a specific story item
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpGet("{id}")]
         public async Task<IActionResult> Story(int id)
         {
-            SortedList<int, Item> stories;
-            if (!_cache.TryGetValue(CacheKeys.Items, out stories) || !stories.ContainsKey(id))
-            {
-                try
-                {
-                    var story = await _storyService.GetItem(id).ConfigureAwait(false);
-
-                    if(stories == null)
-                    {
-                        stories = new SortedList<int, Item>();
-                    }
-                    stories.Add(id, story);
-                    var cacheEntryOptions = new MemoryCacheEntryOptions().SetSlidingExpiration(TimeSpan.FromMinutes(1)); // Temp val, define in config later
-                    _cache.Set(CacheKeys.Items, stories, cacheEntryOptions);
-
-                    return Ok(story);
-                }
-                catch (Exception)
-                {
-                    return BadRequest($"Error pulling story {id}");
-                }
-            }
-            return Ok(stories.GetValueOrDefault(id));
+            var story = await _storyProvider.GetItem(id);
+            if (story == null)
+                return BadRequest("Error loading story");
+            return Ok(story);
         }
     }
 }

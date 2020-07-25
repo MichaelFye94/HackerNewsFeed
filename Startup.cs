@@ -1,5 +1,6 @@
 using hacker_news_feed.Service.Data;
 using hacker_news_feed.Service.Interfaces.Story;
+using hacker_news_feed.Service.Providers;
 using hacker_news_feed.Service.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -29,6 +30,8 @@ namespace hacker_news_feed
             });
 
             services.AddTransient<IStoryService, StoryService>();
+            services.AddTransient<IStoryCacheService, StoryCacheService>();
+            services.AddTransient<IStoryProvider, StoryProvider>();
 
             // In production, the Angular files will be served from this directory
             services.AddSpaStaticFiles(configuration =>
