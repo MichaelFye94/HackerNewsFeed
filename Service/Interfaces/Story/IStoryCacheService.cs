@@ -7,9 +7,9 @@ namespace hacker_news_feed.Service.Interfaces.Story
     {
         bool GetStoryCached(int id, out Item story);
         IEnumerable<int> GetStoriesNotContained(IEnumerable<int> ids);
-        bool TryGetNewStoryIdsCache(out IEnumerable<int> newStoryIds);
+        IEnumerable<int> TryGetNewStoryIdsCache();
         Item TryAddStoryToCache(Item story);
-        bool TryGetStoriesCache(out SortedList<int, Item> stories);
+        SortedList<int, Item> TryGetStoriesCache();
         IEnumerable<int> TryAddNewStoryIdsToCache(IEnumerable<int> ids);
         SortedList<int, Item> TryAddStoriesToCache(IEnumerable<Item> stories);
     }

@@ -22,11 +22,10 @@ namespace hacker_news_feed.Service.Services
 
         public bool GetStoryCached(int id, out Item story)
         {
-            SortedList<int, Item> stories;
-            var cached = TryGetStoriesCache(out stories);
-            if (cached)
+            var storyCache = TryGetStoriesCache();
+            if (storyCache == null)
             {
-                story = stories.GetValueOrDefault(id);
+                story = storyCache.GetValueOrDefault(id);
                 return story != null;
             }
 
@@ -36,28 +35,34 @@ namespace hacker_news_feed.Service.Services
 
         public IEnumerable<int> GetStoriesNotContained(IEnumerable<int> ids)
         {
-            SortedList<int, Item> stories;
-            var cached = TryGetStoriesCache(out stories);
-            if (!cached)
+            var storyCache = TryGetStoriesCache();
+            if (storyCache == null)
                 return new List<int>();
 
-            return ids.Where(id => !stories.ContainsKey(id) || stories[id] == null);
+            return ids.Where(id => !storyCache.ContainsKey(id) || storyCache[id] == null);
         }
 
-        public bool TryGetNewStoryIdsCache(out IEnumerable<int> newStoryIds)
-            => TryGetValue(CacheKeys.NewStories, out newStoryIds);
+        public IEnumerable<int> TryGetNewStoryIdsCache()
+        {
+            IEnumerable<int> newStoryIds);
+            _cache.TryGetValue(CacheKeys.NewStories, out newStoryIds);
+            return newStoryIds;
+        }
 
-        public bool TryGetStoriesCache(out SortedList<int, Item> stories)
-            => TryGetValue(CacheKeys.Items, out stories);
+        public SortedList<int, Item> TryGetStoriesCache()
+        {
+            SortedList<int, Item> stories;
+            _cache.TryGetValue(CacheKeys.Items, out stories);
+            return stories;
+        }
 
         public IEnumerable<int> TryAddNewStoryIdsToCache(IEnumerable<int> ids)
             => SetNewStoryIdsCache(ids);
 
         public Item TryAddStoryToCache(Item story)
         {
-            SortedList<int, Item> storyCache;
-            var cached = TryGetStoriesCache(out storyCache);
-            if (!cached)
+            var storyCache = TryGetStoriesCache();
+            if (storyCache == null)
                 storyCache = new SortedList<int, Item>();
 
             var success = storyCache.TryAdd(story.Id, story);
@@ -70,9 +75,8 @@ namespace hacker_news_feed.Service.Services
 
         public SortedList<int, Item> TryAddStoriesToCache(IEnumerable<Item> stories)
         {
-            SortedList<int, Item> storyCache;
-            var cached = TryGetStoriesCache(out storyCache);
-            if (!cached)
+            var storyCache = TryGetStoriesCache();
+            if (storyCache == null)
                 storyCache = new SortedList<int, Item>();
 
             foreach (var story in stories)
@@ -84,9 +88,6 @@ namespace hacker_news_feed.Service.Services
 
             return SetStoriesCache(storyCache);
         }
-
-        private bool TryGetValue<T>(object key, out T value)
-            => _cache.TryGetValue(key, out value);
 
         private T Set<T>(object key, T value)
             => _cache.Set(key, value, _defaultOptions);

@@ -42,10 +42,8 @@ namespace hacker_news_feed.Service.Providers
 
         public async Task<IEnumerable<int>> GetNewStoryIds()
         {
-            IEnumerable<int> newStories;
-
-            var cached = _cache.TryGetNewStoryIdsCache(out newStories);
-            if (cached)
+            var newStories = _cache.TryGetNewStoryIdsCache();
+            if (newStories != null)
                 return newStories;
 
             try
@@ -72,8 +70,7 @@ namespace hacker_news_feed.Service.Providers
             }
             else
             {
-                SortedList<int, Item> stories;
-                _ = _cache.TryGetStoriesCache(out stories);
+                var stories = _cache.TryGetStoriesCache();
                 if(stories == null)
                 {
                     items = await _storyService.GetItems(storyIds).ConfigureAwait(false);
