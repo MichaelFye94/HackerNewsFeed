@@ -42,7 +42,7 @@ export class NewStoriesListComponent implements OnInit {
     }
   }
 
-  private getNewStories(page:number, pageSize:number) {
+  getNewStories(page:number, pageSize:number) {
     this.storyService.getNewStories(page, pageSize).subscribe(stories => this.updatePage(stories));
   }
 

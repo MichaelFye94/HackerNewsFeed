@@ -40,10 +40,11 @@ describe('StoryComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  // it('should load story from service', () => {
-  //   const testStory = getTestItems()[0];
-  //   component.ngOnInit();
-  //   expect(component.id).toBeTruthy();
-  //   expect(component.story).toEqual(testStory);
-  // });
+  it('should call get new story equal to first test story on load', async(() => {
+    const testStory = getTestItems()[0];
+    fixture.detectChanges();
+    fixture.whenStable().then(() => {
+      expect(component.story).toEqual(testStory);
+    })
+  }));
 });

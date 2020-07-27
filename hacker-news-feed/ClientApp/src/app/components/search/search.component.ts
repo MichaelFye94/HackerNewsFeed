@@ -13,7 +13,11 @@ export class SearchComponent {
   }
 
   onSearch() {
-    if(!this.id) return;
+    if(!this.id || isNaN(this.id)){
+      alert("Only Id Numbers are valid");
+      this.id = undefined;
+      return;
+    };
 
     this.router.navigate([`/${this.id}`]);
   }
