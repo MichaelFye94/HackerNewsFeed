@@ -11,12 +11,18 @@ import { StoryService } from '../../../services/Story/story.service';
 export class StoryComponent {
   id:number;
   story:Item;
+  error:string;
 
   constructor(private route: ActivatedRoute, @Inject(StoryService) private storyService: StoryService) {
   }
 
   ngOnInit(){
     this.id = this.route.snapshot.params.id;
-    this.storyService.getItem(this.id).subscribe(item => this.story = item);
+    this.storyService
+      .getItem(this.id)
+      .subscribe(
+        item => this.story = item,
+        error => error = `Error loading story ${this.id}`
+      );
   }
 }

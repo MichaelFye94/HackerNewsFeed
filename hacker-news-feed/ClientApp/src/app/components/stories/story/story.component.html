@@ -1,5 +1,7 @@
-<p *ngIf="!story"><em>Loading...</em></p>
-
+<p *ngIf="!story && !error"><em>Loading...</em></p>
+<div class="alert alert-danger" role="alert" *ngIf="error">
+    {{error}}
+</div>
 <div class="container-fluid" *ngIf="story">
     <h1>Story:</h1>
     <span>

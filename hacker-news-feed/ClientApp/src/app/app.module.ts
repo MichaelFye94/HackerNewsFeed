@@ -10,7 +10,6 @@ import { NavMenuComponent } from './components/nav-menu/nav-menu.component';
 import { NewStoriesListComponent } from './components/stories/new-stories-list/new-stories-list.component';
 import { SearchComponent } from './components/search/search.component';
 import { StoryComponent } from './components/stories/story/story.component';
-import { PagedListComponent } from './components/utils/paged-list/paged-list.component';
 
 @NgModule({
   declarations: [
@@ -19,8 +18,7 @@ import { PagedListComponent } from './components/utils/paged-list/paged-list.com
     NavMenuComponent,
     NewStoriesListComponent,
     SearchComponent,
-    StoryComponent,
-    PagedListComponent
+    StoryComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
