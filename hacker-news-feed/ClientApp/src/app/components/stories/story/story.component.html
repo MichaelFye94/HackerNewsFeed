@@ -1,0 +1,11 @@
+<p *ngIf="!story && !error"><em>Loading...</em></p>
+<div class="alert alert-danger" role="alert" *ngIf="error">
+    {{error}}
+</div>
+<div class="container-fluid" *ngIf="story">
+    <h1>Story:</h1>
+    <span>
+        <h2>{{ story.title }} <a href={{story.url}} *ngIf="!!story.url"><i class="fas fa-link"></i></a></h2>
+        <i>By: {{story.by}}</i>
+    </span>
+</div>
